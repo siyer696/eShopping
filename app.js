@@ -5,12 +5,12 @@ const path = require('path');
 //Third Party Modules
 const express = require('express');
 const bodyParser = require('body-parser');
-const expressHbs = require('express-handlebars');
+// const expressHbs = require('express-handlebars');
 
 const app = express();
 
-app.engine('hbs', expressHbs({ layoutDir: 'views/layout', defaultLayout: 'main-layout', extname: 'hbs' }));
-app.set('view engine', 'hbs');
+// app.engine('hbs', expressHbs({ layoutDir: 'views/layout', defaultLayout: 'main-layout', extname: 'hbs' }));
+app.set('view engine', 'ejs');
 app.set('views', 'views')   //set location of views
 
 const adminRoutes = require('./routes/admin');
