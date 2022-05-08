@@ -14,7 +14,8 @@ router.get('/', (req, res, next) => {
     const products = adminData.products;
     console.log('Shop.js', adminData.products);
     // res.sendFile(path.join(rootDir, 'views', 'shop.html'));
-    res.render('shop', {pageTitle: "Shop", prods: products, docTitle: 'Shop', path: '/'});
+    //pug doesnt need hasProducts
+    res.render('shop', {pageTitle: "Shop", prods: products, docTitle: 'Shop', path: '/', hasProducts: products.length > 0});
 })
 
 module.exports = router;
