@@ -1,0 +1,1 @@
+This is text script inside test.txt
