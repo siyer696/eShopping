@@ -11,7 +11,7 @@ const getProductsFromFile = (cb) => {
             return cb([]);
         }
         else {
-            console.log(JSON.parse(fileContent));
+            // console.log(JSON.parse(fileContent));
             cb(JSON.parse(fileContent));
         }
     });
@@ -19,8 +19,11 @@ const getProductsFromFile = (cb) => {
 }
 
 module.exports = class Product {
-    constructor(title) {
+    constructor(title, imageUrl, description, price) {
         this.title = title;
+        this.imageUrl = imageUrl;
+        this.description = description;
+        this.price = price;
     }
 
     save() {
