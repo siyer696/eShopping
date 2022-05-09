@@ -6,9 +6,7 @@
         <%- include('../includes/navigation.ejs') %>
 
             <main>
-                <!-- <h1>My Products</h1>
-        <p>List of all the products...</p> -->
-                <% if (prods.length> 0) { %>
+                <% if (prods.length > 0) { %>
                     <div class="grid">
                         <% for (let product of prods) { %>
                             <article class="card product-item">
@@ -21,7 +19,7 @@
                                     <img src="<%= product.imageUrl %>" alt="<%= product.title %>">
                                 </div>
                                 <div class="card__content">
-                                    <h2 class="product__price">
+                                    <h2 class="product__price">$
                                         <%= product.price %>
                                     </h2>
                                     <p class="product__description">
@@ -33,14 +31,13 @@
                                     <form action="/admin/delete-product" method="POST">
                                         <button class="btn" type="submit">Delete</button>
                                     </form>
+
                                 </div>
                             </article>
                             <% } %>
                     </div>
                     <% } else { %>
-                        <h1>No Products Found</h1>
+                        <h1>No Products Found!</h1>
                         <% } %>
             </main>
-
-
-            <%- include('../includes/end.ejs')%>
+            <%- include('../includes/end.ejs') %>
