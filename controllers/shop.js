@@ -3,28 +3,37 @@ const Product = require('../models/product');
 const Cart = require('../models/cart');
 
 module.exports.getProducts = (req, res, next) => {
-    Product.fetchAll((products) => {
-        // res.sendFile(path.join(rootDir, 'views', 'shop.html'));
-        //pug doesnt need hasProducts
-        res.render('shop/product-list', { pageTitle: "All Products", prods: products, docTitle: 'Shop', path: '/products' });
-    });
+    Product.fetchAll().
+        then(([rows, fieldData]) => {       //as we get nested array with rows and metadata.
+            res.render('shop/product-list', { pageTitle: "All Products", prods: rows, docTitle: 'Shop', path: '/products' });
+        }).
+        catch(err => {
+            console.log(err);
+        });
 };
 
 
 module.exports.getProduct = (req, res, next) => {
     const prodId = req.params.productId;
-    Product.findById(prodId, product => {
-        // res.render('shop/product-list', { pageTitle: "All Products", prods: products, docTitle: 'Shop', path: '/products' });
-        console.log(product);
-        res.render('shop/product-detail', { pageTitle: product.title, product: product, path: '/products' });
-    });
+    Product.findById(prodId)
+        .then(([product]) => {
+            console.log(product);
+            res.render('shop/product-detail', { pageTitle: product[0].title, product: product[0], path: '/products' });
+        }
+        )
+        .catch(err => {
+            console.log(err);
+        });
 };
 
 module.exports.getIndex = (req, res, next) => {
-    Product.fetchAll((products) => {
-        res.render('shop/index', { pageTitle: "Shop", prods: products, docTitle: 'Shop', path: '/' });
-    });
-
+    Product.fetchAll().
+        then(([rows, fieldData]) => {
+            res.render('shop/index', { pageTitle: 'Shop', prods: rows, path: '/' });
+        }).
+        catch(err => {
+            console.log(err);
+        });
 };
 
 module.exports.postCart = (req, res, next) => {
