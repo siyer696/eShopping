@@ -15,16 +15,14 @@ module.exports.postAddProduct = (req, res, next) => {
     const description = req.body.description;
     const price = req.body.price;
     //Magic done by sequalize - creat+AssociationName
-    const product = new Product(
-        title,
-        price,
-        description,
-        imageUrl,
-        null,
-        req.user._id
-    );
-    product
-        .save()
+    req.user
+        .createProduct({
+            title: title,
+            price: price,
+            imageUrl: imageUrl,
+            description: description,
+            userId: req.user.id,
+        })
         .then((result) => {
             console.log(result);
             res.redirect("/admin/products");
@@ -40,9 +38,11 @@ module.exports.getEditProduct = (req, res, next) => {
         res.redirect("/");
     }
     const prodId = req.params.productId;
-    Product.findById(prodId)
+    req.user
+        .getProducts({ where: { id: prodId } })
         //   Product.findByPk(prodId)
-        .then((product) => {
+        .then((products) => {
+            const product = products[0];
             if (!product) {
                 return res.redirect("/");
             }
@@ -64,16 +64,14 @@ module.exports.postEditProduct = (req, res, next) => {
     const updatedPrice = req.body.price;
     const updatedImageurl = req.body.imageUrl;
     const updatedDescription = req.body.description;
-    console.log(prodId, typeof prodId);
-    const product = new Product(
-        updatedTitle,
-        updatedPrice,
-        updatedDescription,
-        updatedImageurl,
-        prodId
-    );
-    product
-        .save()
+    Product.findByPk(prodId)
+        .then((product) => {
+            product.title = updatedTitle;
+            product.price = updatedPrice;
+            product.imageUrl = updatedImageurl;
+            product.description = updatedDescription;
+            return product.save();
+        })
         .then((result) => {
             console.log("Updated product!!");
             res.redirect("/admin/products");
@@ -84,7 +82,8 @@ module.exports.postEditProduct = (req, res, next) => {
 };
 
 module.exports.getProducts = (req, res, next) => {
-    Product.fetchAll()
+    req.user
+        .getProducts()
         //   Product.findAll()
         .then((products) => {
             res.render("admin/products", {
@@ -101,7 +100,10 @@ module.exports.getProducts = (req, res, next) => {
 
 module.exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteById(prodId)
+    Product.findByPk(prodId)
+        .then((product) => {
+            return product.destroy();
+        })
         .then((result) => {
             console.log("DESTROYED PRODUCT");
             res.redirect("/admin/products");
