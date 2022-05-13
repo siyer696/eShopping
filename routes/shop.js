@@ -13,9 +13,9 @@ router.get('/', shopController.getIndex);
 
 router.get('/products', shopController.getProducts);
 
-router.get('/products/delete');
+// router.get('/products/delete');
 
-// request url containing params should be at last as express may consider above request for productId
+// // request url containing params should be at last as express may consider above request for productId
 router.get('/products/:productId', shopController.getProduct);
 
 router.post('/cart', shopController.postCart);

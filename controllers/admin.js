@@ -1,3 +1,4 @@
+const product = require("../models/product");
 const Product = require("../models/product");
 
 module.exports.getAddProduct = (req, res, next) => {
@@ -15,18 +16,20 @@ module.exports.postAddProduct = (req, res, next) => {
     const description = req.body.description;
     const price = req.body.price;
     //Magic done by sequalize - creat+AssociationName
-    const product = new Product(
-        title,
-        price,
-        description,
-        imageUrl,
-        null,
-        req.user._id
-    );
+    const product = new Product({
+        title: title,
+        imageUrl: imageUrl,
+        price: price,
+        description: description,
+        //mongoose understands this and adds id implicitly
+        userId: req.user
+    });
+
     product
         .save()
         .then((result) => {
-            console.log(result);
+            //Its not a promise but mongoose still gives us then and catch functions.
+            // console.log(result);
             res.redirect("/admin/products");
         })
         .catch((err) => {
@@ -64,16 +67,15 @@ module.exports.postEditProduct = (req, res, next) => {
     const updatedPrice = req.body.price;
     const updatedImageurl = req.body.imageUrl;
     const updatedDescription = req.body.description;
-    console.log(prodId, typeof prodId);
-    const product = new Product(
-        updatedTitle,
-        updatedPrice,
-        updatedDescription,
-        updatedImageurl,
-        prodId
-    );
-    product
-        .save()
+    // console.log(prodId, typeof prodId);
+    Product.findById(prodId)
+        .then((product) => {
+            product.title = updatedTitle;
+            product.price = updatedPrice;
+            product.description = updatedDescription;
+            product.imageUrl = updatedImageurl;
+            return product.save();
+        })
         .then((result) => {
             console.log("Updated product!!");
             res.redirect("/admin/products");
@@ -84,9 +86,12 @@ module.exports.postEditProduct = (req, res, next) => {
 };
 
 module.exports.getProducts = (req, res, next) => {
-    Product.fetchAll()
-        //   Product.findAll()
+    Product.find()
+        .select('title price -_id')
+        //Fetches all info regarding userId
+        .populate('userId', 'name email')
         .then((products) => {
+            // console.log(products);
             res.render("admin/products", {
                 pageTitle: "Shop",
                 prods: products,
@@ -101,7 +106,7 @@ module.exports.getProducts = (req, res, next) => {
 
 module.exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteById(prodId)
+    Product.findByIdAndRemove(prodId)
         .then((result) => {
             console.log("DESTROYED PRODUCT");
             res.redirect("/admin/products");
