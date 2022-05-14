@@ -16,11 +16,14 @@ const MONGODBURI =
     "mongodb+srv://node-shop:node-shop@sachincluster123.u43vg.mongodb.net/myFirstDatabase";
 
 const app = express();
+
+//Used to storing sesssion info in db
 const store = new MongoDBStore({
     uri: MONGODBURI,
     collection: "sessions",
 });
 
+//used to prevent csrf attacks
 const csrfProtection = csrf();
 
 // app.engine('hbs', expressHbs({ layoutDir: 'views/layout', defaultLayout: 'main-layout', extname: 'hbs' }));
@@ -37,6 +40,7 @@ const User = require("./models/user");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
+//create a session for user. Note this only creates session. Authentication(isLoggedIn=true is done in GET /login)
 app.use(
     session({
         secret: "my secret",
@@ -50,6 +54,7 @@ app.use(
 app.use(csrfProtection);
 app.use(flash());
 
+//User Middleware. Add user mongoose obj in req
 app.use((req, res, next) => {
     if (!req.session.user) {
         return next();
