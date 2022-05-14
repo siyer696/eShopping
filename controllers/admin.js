@@ -22,7 +22,7 @@ module.exports.postAddProduct = (req, res, next) => {
         price: price,
         description: description,
         //mongoose understands this and adds id implicitly
-        userId: req.user
+        userId: req.user,
     });
 
     product
@@ -87,9 +87,9 @@ module.exports.postEditProduct = (req, res, next) => {
 
 module.exports.getProducts = (req, res, next) => {
     Product.find()
-        .select('title price -_id')
+        .select("title price -_id")
         //Fetches all info regarding userId
-        .populate('userId', 'name email')
+        .populate("userId", "name email")
         .then((products) => {
             // console.log(products);
             res.render("admin/products", {

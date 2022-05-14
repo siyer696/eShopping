@@ -37,6 +37,7 @@ module.exports.getIndex = (req, res, next) => {
                 pageTitle: "Shop",
                 prods: products,
                 path: "/",
+                csrfToken: req.csrfToken()
             });
         })
         .catch((err) => {
@@ -99,7 +100,7 @@ module.exports.postOrder = (req, res, next) => {
             });
             const order = new Order({
                 user: {
-                    name: req.user.name,
+                    email: req.user.email,
                     userId: req.user,
                 },
                 products: products,
