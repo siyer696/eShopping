@@ -1,4 +1,5 @@
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 const product = require("../models/product");
 const Product = require("../models/product");
@@ -6,12 +7,12 @@ const Product = require("../models/product");
 module.exports.getAddProduct = (req, res, next) => {
     // res.sendFile(path.join(rootDir, 'views', 'add-product.html'))
     res.render("admin/edit-product", {
-        pageTitle: 'Add Product',
-        path: '/admin/add-product',
+        pageTitle: "Add Product",
+        path: "/admin/add-product",
         editing: false,
         hasError: false,
         errorMessage: null,
-        validationErrors: []
+        validationErrors: [],
     });
 };
 
@@ -23,23 +24,25 @@ module.exports.postAddProduct = (req, res, next) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log(errors.array());
+        // console.log(errors.array());
         return res.status(422).render("admin/edit-product", {
             pageTitle: "Add Product",
-            path: "/admin/edit-product",
+            path: "/admin/add-product",
             editing: false,
+            hasError: true,
             errorMessage: errors.array()[0].msg,
-            oldInput: {
+            product: {
                 title: title,
                 imageUrl: imageUrl,
-                description: description,
                 price: price,
+                description: description,
             },
             validationErrors: errors.array(),
         });
     }
 
     const product = new Product({
+        // _id: new mongoose.Types.ObjectId("627d1224f1cd35d1476cc15d"),
         title: title,
         imageUrl: imageUrl,
         price: price,
@@ -52,11 +55,14 @@ module.exports.postAddProduct = (req, res, next) => {
         .save()
         .then((result) => {
             //Its not a promise but mongoose still gives us then and catch functions.
-            // console.log(result);
+            console.log("Created product!")
             res.redirect("/admin/products");
         })
         .catch((err) => {
-            console.log(err);
+            // return res.redirect("/500");
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
 };
 
@@ -76,13 +82,16 @@ module.exports.getEditProduct = (req, res, next) => {
                 pageTitle: "Edit Product",
                 path: "/admin/edit-product",
                 editing: editMode,
+                hasError: false,
                 product: product,
                 errorMessage: null,
-                validationErrors: []
+                validationErrors: [],
             });
         })
         .catch((err) => {
-            console.log(err);
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
 };
 
@@ -92,7 +101,7 @@ module.exports.postEditProduct = (req, res, next) => {
     const updatedPrice = req.body.price;
     const updatedImageurl = req.body.imageUrl;
     const updatedDescription = req.body.description;
-    
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log(errors.array());
@@ -100,13 +109,14 @@ module.exports.postEditProduct = (req, res, next) => {
             pageTitle: "Edit Product",
             path: "/admin/edit-product",
             editing: true,
+            hasError: true,
             errorMessage: errors.array()[0].msg,
             product: {
                 title: updatedTitle,
                 imageUrl: updatedImageurl,
                 description: updatedDescription,
                 price: updatedPrice,
-                _id: prodId
+                _id: prodId,
             },
             validationErrors: errors.array(),
         });
@@ -127,7 +137,9 @@ module.exports.postEditProduct = (req, res, next) => {
             });
         })
         .catch((err) => {
-            console.log(err);
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
 };
 
@@ -146,7 +158,9 @@ module.exports.getProducts = (req, res, next) => {
             });
         })
         .catch((err) => {
-            console.log(err);
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
 };
 
@@ -159,6 +173,8 @@ module.exports.postDeleteProduct = (req, res, next) => {
             res.redirect("/admin/products");
         })
         .catch((err) => {
-            console.log(err);
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
 };

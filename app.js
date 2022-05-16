@@ -54,19 +54,6 @@ app.use(
 app.use(csrfProtection);
 app.use(flash());
 
-//User Middleware. Add user mongoose obj in req
-app.use((req, res, next) => {
-    if (!req.session.user) {
-        return next();
-    }
-    User.findById(req.session.user._id)
-        .then((user) => {
-            req.user = user;
-            next();
-        })
-        .catch((err) => console.log(err));
-});
-
 app.use((req, res, next) => {
     //set variables that gets rendered local files/views
     res.locals.isAuthenticated = req.session.isLoggedIn;
@@ -74,12 +61,45 @@ app.use((req, res, next) => {
     next();
 });
 
+
+//User Middleware. Add user mongoose obj in req
+app.use((req, res, next) => {
+    if (!req.session.user) {
+        return next();
+    }
+    // throw new Error("dummy");
+    User.findById(req.session.user._id)
+        .then((user) => {
+            // throw new Error("Intentional error");
+            if (!user) {
+                return next();
+            }
+            req.user = user;
+            next();
+        })
+        //Errors thrown in catch of promise is not caught in 500 middleware
+        .catch((err) => {
+            next(new Error(err));
+        });
+});
+
 //Filtering requests
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/500", errorController.get500);
+
 app.use(errorController.get404);
+
+// Special error handling middle ware provided by expresss
+app.use((error, req, res, next) => {
+    res.status(500).render("500", {
+        pageTitle: "Error",
+        path: "/500",
+        isAuthenticated: req.session.isLoggedIn,
+    });
+});
 
 mongoose
     .connect(
