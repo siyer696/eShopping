@@ -70,15 +70,17 @@ module.exports.postEditProduct = (req, res, next) => {
     // console.log(prodId, typeof prodId);
     Product.findById(prodId)
         .then((product) => {
+            if (product.userId.toString() != req.user._id.toString()) {
+                return res.redirect("/");
+            }
             product.title = updatedTitle;
             product.price = updatedPrice;
             product.description = updatedDescription;
             product.imageUrl = updatedImageurl;
-            return product.save();
-        })
-        .then((result) => {
-            console.log("Updated product!!");
-            res.redirect("/admin/products");
+            product.save().then((result) => {
+                console.log("Updated product!!");
+                res.redirect("/admin/products");
+            });
         })
         .catch((err) => {
             console.log(err);
@@ -86,8 +88,8 @@ module.exports.postEditProduct = (req, res, next) => {
 };
 
 module.exports.getProducts = (req, res, next) => {
-    Product.find()
-        .select("title price -_id")
+    Product.find({ userId: req.user._id })
+        // .select("title price -_id")
         //Fetches all info regarding userId
         .populate("userId", "name email")
         .then((products) => {
@@ -106,8 +108,9 @@ module.exports.getProducts = (req, res, next) => {
 
 module.exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findByIdAndRemove(prodId)
+    Product.deleteOne({ _id: prodId, userId: req.user._id })
         .then((result) => {
+            console.log(result);
             console.log("DESTROYED PRODUCT");
             res.redirect("/admin/products");
         })

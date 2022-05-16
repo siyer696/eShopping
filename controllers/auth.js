@@ -1,17 +1,18 @@
+const crypto = require("crypto");
+
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
 
 const User = require("../models/user");
 
-const transporter = nodemailer.createTransport(
-    sendgridTransport({
-        auth: {
-            api_key:
-                "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",
-        },
-    })
-);
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: "sachin.iyer@wearealef.com",
+        pass: "ygoprxmvavwkvtsd",
+    },
+});
 
 exports.getLogin = (req, res, next) => {
     // let pog = new Map();
@@ -125,4 +126,117 @@ exports.getSignup = (req, res, next) => {
         isAuthenticated: false,
         errorMessage: message,
     });
+};
+
+exports.getReset = (req, res, next) => {
+    let message = req.flash("error");
+    if (message.length > 0) {
+        message = message[0];
+    } else {
+        message = null;
+    }
+    res.render("auth/reset", {
+        path: "/reset",
+        pageTitle: "Reset Password",
+        isAuthenticated: false,
+        errorMessage: message,
+    });
+};
+
+exports.postReset = (req, res, next) => {
+    crypto.randomBytes(32, (err, buffer) => {
+        if (err) {
+            console.log(err);
+            return res.redirect("/reset");
+        }
+        const token = buffer.toString("hex");
+        User.findOne({ email: req.body.email })
+            .then((user) => {
+                if (!user) {
+                    req.flash("error", "No Account with that email found.");
+                    return res.redirect("/reset");
+                }
+                user.resetToken = token;
+                user.resetTokenExpiration = Date.now() + 3600000;
+                return user.save();
+            })
+            .then((result) => {
+                res.redirect("/login");
+                return transporter.sendMail({
+                    to: "sachin.iyer@wearealef.com",
+                    from: "shop@node-complete.com",
+                    subject: "Password Reset",
+                    html: `<p>You requested password reset</p>
+                    <p>Click this <a href="http://localhost:3000/reset/${token}">link</a></p>`,
+                });
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    });
+};
+
+exports.getNewPassword = (req, res, next) => {
+    const token = req.params.token;
+    User.findOne({
+        resetToken: token,
+        resetTokenExpiration: { $gt: Date.now() },
+    })
+        .then((user) => {
+            let message = req.flash("error");
+            if (message.length > 0) {
+                message = message[0];
+            } else {
+                message = null;
+            }
+            res.render("auth/new-password", {
+                path: "/new-password",
+                pageTitle: "New Password",
+                isAuthenticated: false,
+                errorMessage: message,
+                userId: user._id.toString(),
+            });
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+};
+
+exports.postNewPassword = (req, res, next) => {
+    const newPassword = req.body.password;
+    const userId = req.body.userId;
+    User.findById(userId)
+        .then((user) => {
+            if (!user) {
+                //...
+            }
+            // const newUser = { ...user };
+            // newUser["password"] = newPassword
+            return bcrypt
+                .hash(newPassword, 12)
+                .then((hashedPassword) => {
+                    // newUser["password"] = hashedPassword;
+                    // const user1 = new User({
+                    //     email: newUser["email,
+                    //     password: hashedPassword,
+                    //     cart: { items: [] },
+                    // });
+                    user.resetToken = undefined;
+                    user.resetTokenExpiration = undefined;
+                    user.password = hashedPassword
+                    return user.save();
+                })
+                .then((result) => {
+                    res.redirect("/login");
+                    return transporter.sendMail({
+                        to: "sachin.iyer@wearealef.com",
+                        from: "shop@node-complete.com",
+                        subject: "Password Changed!",
+                        html: "<h1>You changed password!</h1>",
+                    });
+                });
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 };
