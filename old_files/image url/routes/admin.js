@@ -22,7 +22,7 @@ router.post(
             .isString()
             .isLength({ min: 3 })
             .notEmpty(),
-        // body("imageUrl", "Please enter correct Image URL.").notEmpty(),
+        body("imageUrl", "Please enter correct Image URL.").isURL().notEmpty(),
         body("price", "Please enter price as numeric value")
             .isFloat()
             .notEmpty(),
@@ -42,7 +42,7 @@ router.post("/edit-product/", isAuth,
         .isString()
         .isLength({ min: 3 })
         .notEmpty(),
-    // body("imageUrl", "Please enter correct Image URL.").isURL().notEmpty(),
+    body("imageUrl", "Please enter correct Image URL.").isURL().notEmpty(),
     body("price", "Please enter price as numeric value")
         .isFloat()
         .notEmpty(),

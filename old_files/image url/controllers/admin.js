@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 
 const product = require("../models/product");
 const Product = require("../models/product");
-const fileHelper = require("../utils/file");
 
 module.exports.getAddProduct = (req, res, next) => {
     // res.sendFile(path.join(rootDir, 'views', 'add-product.html'))
@@ -19,25 +18,9 @@ module.exports.getAddProduct = (req, res, next) => {
 
 module.exports.postAddProduct = (req, res, next) => {
     const title = req.body.title;
-    const image = req.file;
+    const imageUrl = req.body.imageUrl;
     const description = req.body.description;
     const price = req.body.price;
-
-    if (!image) {
-        return res.status(422).render("admin/edit-product", {
-            pageTitle: "Add Product",
-            path: "/admin/add-product",
-            editing: false,
-            hasError: true,
-            errorMessage: "Attached file format is not supported",
-            product: {
-                title: title,
-                price: price,
-                description: description,
-            },
-            validationErrors: [],
-        });
-    }
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -58,8 +41,6 @@ module.exports.postAddProduct = (req, res, next) => {
         });
     }
 
-    const imageUrl = image.path;
-
     const product = new Product({
         // _id: new mongoose.Types.ObjectId("627d1224f1cd35d1476cc15d"),
         title: title,
@@ -74,7 +55,7 @@ module.exports.postAddProduct = (req, res, next) => {
         .save()
         .then((result) => {
             //Its not a promise but mongoose still gives us then and catch functions.
-            console.log("Created product!");
+            console.log("Created product!")
             res.redirect("/admin/products");
         })
         .catch((err) => {
@@ -118,7 +99,7 @@ module.exports.postEditProduct = (req, res, next) => {
     const prodId = req.body.productId;
     const updatedTitle = req.body.title;
     const updatedPrice = req.body.price;
-    const image = req.file;
+    const updatedImageurl = req.body.imageUrl;
     const updatedDescription = req.body.description;
 
     const errors = validationResult(req);
@@ -132,6 +113,7 @@ module.exports.postEditProduct = (req, res, next) => {
             errorMessage: errors.array()[0].msg,
             product: {
                 title: updatedTitle,
+                imageUrl: updatedImageurl,
                 description: updatedDescription,
                 price: updatedPrice,
                 _id: prodId,
@@ -148,10 +130,7 @@ module.exports.postEditProduct = (req, res, next) => {
             product.title = updatedTitle;
             product.price = updatedPrice;
             product.description = updatedDescription;
-            if (image) {
-                fileHelper.deleteFile(product.imageUrl);
-                product.imageUrl = image.path;
-            }
+            product.imageUrl = updatedImageurl;
             product.save().then((result) => {
                 console.log("Updated product!!");
                 res.redirect("/admin/products");
@@ -187,14 +166,7 @@ module.exports.getProducts = (req, res, next) => {
 
 module.exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findById(prodId)
-        .then((product) => {
-            if (!product) {
-                return next(new Error("Product not found"));
-            }
-            fileHelper.deleteFile(product.imageUrl);
-            return Product.deleteOne({ _id: prodId, userId: req.user._id });
-        })
+    Product.deleteOne({ _id: prodId, userId: req.user._id })
         .then((result) => {
             console.log(result);
             console.log("DESTROYED PRODUCT");
