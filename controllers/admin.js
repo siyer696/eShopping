@@ -5,6 +5,8 @@ const product = require("../models/product");
 const Product = require("../models/product");
 const fileHelper = require("../utils/file");
 
+const ITEMS_PER_PAGE = 2;
+
 module.exports.getAddProduct = (req, res, next) => {
     // res.sendFile(path.join(rootDir, 'views', 'add-product.html'))
     res.render("admin/edit-product", {
@@ -165,18 +167,37 @@ module.exports.postEditProduct = (req, res, next) => {
 };
 
 module.exports.getProducts = (req, res, next) => {
-    Product.find({ userId: req.user._id })
-        // .select("title price -_id")
-        //Fetches all info regarding userId
-        .populate("userId", "name email")
-        .then((products) => {
-            // console.log(products);
-            res.render("admin/products", {
-                pageTitle: "Shop",
-                prods: products,
-                docTitle: "Shop",
-                path: "/admin/products",
-            });
+    const page = +req.query.page || 1;
+    let totalItems;
+    Product.count()
+        .then((numProducts) => {
+            totalItems = numProducts;
+            Product.find({ userId: req.user._id })
+                .skip((page - 1) * ITEMS_PER_PAGE) //Skip N Items
+                .limit(ITEMS_PER_PAGE)
+                // .select("title price -_id")
+                //Fetches all info regarding userId
+                .populate("userId", "name email")
+                .then((products) => {
+                    // console.log(products);
+                    res.render("admin/products", {
+                        pageTitle: "Shop",
+                        prods: products,
+                        docTitle: "Shop",
+                        path: "/admin/products",
+                        currentPage: page,
+                        hasNextPage: totalItems > ITEMS_PER_PAGE * page,
+                        hasPreviousPage: page > 1,
+                        nextPage: page + 1,
+                        previousPage: page - 1,
+                        lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
+                    });
+                })
+                .catch((err) => {
+                    const error = new Error(err);
+                    error.httpStatusCode = 500;
+                    return next(error);
+                });
         })
         .catch((err) => {
             const error = new Error(err);
